@@ -1,5 +1,6 @@
 ﻿#include "GameScene.h"
 #include <cassert>
+#include <time.h>
 
 using namespace DirectX;
 
@@ -19,6 +20,8 @@ GameScene::~GameScene()
 
 void GameScene::Initialize(DirectXCommon* dxCommon, Input* input)
 {
+	srand(time(nullptr));
+
 	// nullptrチェック
 	assert(dxCommon);
 	assert(input);
@@ -48,6 +51,12 @@ void GameScene::Initialize(DirectXCommon* dxCommon, Input* input)
 
 	// --座標{500, 500}に、テクスチャ2番のスプライトを生成-- //
 	sprite2 = Sprite::Create(2, { 500, 500 }, {1, 0, 0, 1}, {0, 0}, false, true);
+
+	for (size_t i = 0; i < maxObject_; i++) {
+		object_[i] = Object3d::Create();
+		object_[i]->SetPosition({static_cast<float>(rand() % 40 - 20), 0.0f, static_cast<float>(rand() % 40 - 20) });
+		object_[i]->Update();
+	}
 }
 
 void GameScene::Update()
@@ -79,6 +88,10 @@ void GameScene::Update()
 
 	object3d->Update();
 
+	for (size_t i = 0; i < maxObject_; i++) {
+		object_[i]->Update();
+	}
+
 	// --[SPACE]を押していたら-- //
 	if (input->PushKey(DIK_SPACE)) {
 		// 現在の座標を取得 //
@@ -101,13 +114,11 @@ void GameScene::Draw()
 	// 背景スプライト描画前処理
 	Sprite::PreDraw(cmdList);
 	// 背景スプライト描画
-	spriteBG->Draw();
+	//spriteBG->Draw();
 
 	/// <summary>
 	/// ここに背景スプライトの描画処理を追加できる
 	/// </summary>
-	//sprite1->Draw();
-	//sprite2->Draw();
 
 	// スプライト描画後処理
 	Sprite::PostDraw();
@@ -120,7 +131,11 @@ void GameScene::Draw()
 	Object3d::PreDraw(cmdList);
 
 	// 3Dオブクジェクトの描画
-	object3d->Draw();
+	//object3d->Draw();
+
+	for (size_t i = 0; i < maxObject_; i++) {
+		object_[i]->Draw();
+	}
 
 	/// <summary>
 	/// ここに3Dオブジェクトの描画処理を追加できる
@@ -137,6 +152,8 @@ void GameScene::Draw()
 	/// <summary>
 	/// ここに前景スプライトの描画処理を追加できる
 	/// </summary>
+	//sprite1->Draw();
+	//sprite2->Draw();
 
 	// デバッグテキストの描画
 	debugText.DrawAll(cmdList);

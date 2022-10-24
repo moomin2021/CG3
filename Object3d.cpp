@@ -28,6 +28,8 @@ XMMATRIX Object3d::matProjection{};
 XMFLOAT3 Object3d::eye = { 0, 0, -50.0f };
 XMFLOAT3 Object3d::target = { 0, 0, 0 };
 XMFLOAT3 Object3d::up = { 0, 1, 0 };
+XMMATRIX Object3d::matBillboard = XMMatrixIdentity();
+XMMATRIX Object3d::matBillboardY = XMMatrixIdentity();
 D3D12_VERTEX_BUFFER_VIEW Object3d::vbView{};
 D3D12_INDEX_BUFFER_VIEW Object3d::ibView{};
 Object3d::VertexPosNormalUv Object3d::vertices[vertexCount];
@@ -281,6 +283,7 @@ void Object3d::InitializeGraphicsPipeline()
 
 	// ブレンドステートの設定
 	gpipeline.BlendState.RenderTarget[0] = blenddesc;
+	gpipeline.BlendState.AlphaToCoverageEnable = true;
 
 	// 深度バッファのフォーマット
 	gpipeline.DSVFormat = DXGI_FORMAT_D32_FLOAT;
@@ -335,7 +338,7 @@ void Object3d::LoadTexture()
 	ScratchImage scratchImg{};
 
 	// WICテクスチャのロード
-	result = LoadFromWICFile(L"Resources/tex1.png", WIC_FLAGS_NONE, &metadata, scratchImg);
+	result = LoadFromWICFile(L"Resources/kusa.png", WIC_FLAGS_NONE, &metadata, scratchImg);
 	assert(SUCCEEDED(result));
 
 	ScratchImage mipChain{};
@@ -521,6 +524,26 @@ void Object3d::UpdateViewMatrix()
 	// Y軸はZ軸→X軸の外積で求まる //
 	cameraAxisY = XMVector3Cross(cameraAxisZ, cameraAxisX);
 
+#pragma region Y軸回りビルボード行列の計算
+	// カメラX軸、Y軸、Z軸 //
+	XMVECTOR ybillCameraAxisX, ybillCameraAxisY, ybillCameraAxisZ;
+
+	// X軸は共通 //
+	ybillCameraAxisX = cameraAxisX;
+
+	// Y軸はワールド座標系のY軸 //
+	ybillCameraAxisY = XMVector3Normalize(upVector);
+
+	// Z軸はX軸→Y軸の外積で求まる //
+	ybillCameraAxisZ = XMVector3Cross(cameraAxisX, cameraAxisY);
+
+	// Y軸回りのビルボード行列 //
+	matBillboardY.r[0] = ybillCameraAxisX;
+	matBillboardY.r[1] = ybillCameraAxisY;
+	matBillboardY.r[2] = ybillCameraAxisZ;
+	matBillboardY.r[3] = XMVectorSet(0, 0, 0, 1);
+#pragma endregion
+
 	// カメラ回転行列 //
 	XMMATRIX matCameraRot;
 
@@ -529,6 +552,12 @@ void Object3d::UpdateViewMatrix()
 	matCameraRot.r[1] = cameraAxisY;
 	matCameraRot.r[2] = cameraAxisZ;
 	matCameraRot.r[3] = XMVectorSet(0, 0, 0, 1);
+
+	// 全方向ビルボード行列の計算 //
+	matBillboard.r[0] = cameraAxisX;
+	matBillboard.r[1] = cameraAxisY;
+	matBillboard.r[2] = cameraAxisZ;
+	matBillboard.r[3] = XMVectorSet(0, 0, 0, 1);
 
 	// 転置により逆行列(逆回転)を計算 //
 	matView = XMMatrixTranspose(matCameraRot);
@@ -585,8 +614,10 @@ void Object3d::Update()
 
 	// ワールド行列の合成
 	matWorld = XMMatrixIdentity(); // 変形をリセット
+	//matWorld *= matBillboard;// ビルボード行列を掛ける
 	matWorld *= matScale; // ワールド行列にスケーリングを反映
 	matWorld *= matRot; // ワールド行列に回転を反映
+	matWorld *= matBillboardY;// Y軸ビルボード行列を掛ける
 	matWorld *= matTrans; // ワールド行列に平行移動を反映
 
 	// 親オブジェクトがあれば

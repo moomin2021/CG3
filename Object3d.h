@@ -139,6 +139,10 @@ private: // 静的メンバ変数
 	static XMFLOAT3 target;
 	// 上方向ベクトル
 	static XMFLOAT3 up;
+	// ビルボード行列
+	static XMMATRIX matBillboard;
+	// Y軸回りビルボード
+	static XMMATRIX matBillboardY;
 	// 頂点バッファビュー
 	static D3D12_VERTEX_BUFFER_VIEW vbView;
 	// インデックスバッファビュー
