@@ -12,6 +12,9 @@ GameScene::~GameScene()
 {
 	delete spriteBG;
 	delete object3d;
+	for (size_t i = 0; i < maxObject_; i++) {
+		delete object_[i];
+	}
 
 	// --スプライトの解放-- //
 	delete sprite1;
