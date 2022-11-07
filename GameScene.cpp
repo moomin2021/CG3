@@ -11,7 +11,7 @@ GameScene::GameScene()
 GameScene::~GameScene()
 {
 	delete spriteBG;
-	delete object3d;
+	delete particleMan;
 	//for (size_t i = 0; i < maxObject_; i++) {
 	//	delete object_[i];
 	//}
@@ -43,8 +43,8 @@ void GameScene::Initialize(DirectXCommon* dxCommon, Input* input)
 	// 背景スプライト生成
 	spriteBG = Sprite::Create(1, { 0.0f,0.0f });
 	// 3Dオブジェクト生成
-	object3d = ParticleManager::Create();
-	object3d->Update();
+	particleMan = ParticleManager::Create();
+	particleMan->Update();
 
 	// --テクスチャ2番に読み込み-- //
 	Sprite::LoadTexture(2, L"Resources/texture.png");
@@ -54,6 +54,30 @@ void GameScene::Initialize(DirectXCommon* dxCommon, Input* input)
 
 	// --座標{500, 500}に、テクスチャ2番のスプライトを生成-- //
 	sprite2 = Sprite::Create(2, { 500, 500 }, {1, 0, 0, 1}, {0, 0}, false, true);
+
+	for (size_t i = 0; i < 100; i++) {
+		// X, Y, Z全て[-5.0f, +5.0f]でランダムに分布
+		const float rnd_pos = 10.0f;
+		XMFLOAT3 pos{};
+		pos.x = (float)rand() / RAND_MAX * rnd_pos - rnd_pos / 2.0f;
+		pos.y = (float)rand() / RAND_MAX * rnd_pos - rnd_pos / 2.0f;
+		pos.z = (float)rand() / RAND_MAX * rnd_pos - rnd_pos / 2.0f;
+		
+		// X, Y, Z全て[-0.05f, +0.05f]でランダムに分布
+		const float rnd_vel = 0.1f;
+		XMFLOAT3 vel{};
+		vel.x = (float)rand() / RAND_MAX * rnd_vel - rnd_vel / 2.0f;
+		vel.y = (float)rand() / RAND_MAX * rnd_vel - rnd_vel / 2.0f;
+		vel.z = (float)rand() / RAND_MAX * rnd_vel - rnd_vel / 2.0f;
+
+		// X, Y, Z全て[-0.001f, +0.0f]でランダムに分布
+		XMFLOAT3 acc{};
+		const float rnd_acc = 0.001f;
+		acc.y = -(float)rand() / RAND_MAX * rnd_acc;
+
+		// 追加
+		particleMan->Add(60, pos, vel, acc);
+	}
 
 	//for (size_t i = 0; i < maxObject_; i++) {
 	//	object_[i] = ParticleManager::Create();
@@ -89,7 +113,7 @@ void GameScene::Update()
 		else if (input->PushKey(DIK_A)) { ParticleManager::CameraMoveEyeVector({ -1.0f,0.0f,0.0f }); }
 	}
 
-	object3d->Update();
+	particleMan->Update();
 
 	//for (size_t i = 0; i < maxObject_; i++) {
 	//	object_[i]->Update();
@@ -117,7 +141,7 @@ void GameScene::Draw()
 	// 背景スプライト描画前処理
 	Sprite::PreDraw(cmdList);
 	// 背景スプライト描画
-	//spriteBG->Draw();
+	spriteBG->Draw();
 
 	/// <summary>
 	/// ここに背景スプライトの描画処理を追加できる
@@ -134,7 +158,7 @@ void GameScene::Draw()
 	ParticleManager::PreDraw(cmdList);
 
 	// 3Dオブクジェクトの描画
-	object3d->Draw();
+	particleMan->Draw();
 
 	for (size_t i = 0; i < maxObject_; i++) {
 		//object_[i]->Draw();
