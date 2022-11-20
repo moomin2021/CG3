@@ -654,6 +654,9 @@ void ParticleManager::Add(int life, XMFLOAT3 position, XMFLOAT3 velocity, XMFLOA
 	p.velocity = velocity;
 	p.accel = accel;
 	p.num_frame = life;
+	p.s_scale = start_scale;
+	p.scale = start_scale;
+	p.e_scale = end_scale;
 }
 
 bool ParticleManager::Initialize()
